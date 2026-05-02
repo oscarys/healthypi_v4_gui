@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1400</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>HealthyPi v4 Monitor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="root_layout">
+    <property name="spacing">
+     <number>8</number>
+    </property>
+    <property name="leftMargin">
+     <number>8</number>
+    </property>
+    <property name="topMargin">
+     <number>8</number>
+    </property>
+    <property name="rightMargin">
+     <number>8</number>
+    </property>
+    <property name="bottomMargin">
+     <number>8</number>
+    </property>
+    <item>
+     <!-- Vitals panel — fixed width, promoted to VitalsPanel -->
+     <widget class="VitalsPanel" name="vitals_panel" native="true">
+      <property name="maximumWidth">
+       <number>200</number>
+      </property>
+      <property name="minimumWidth">
+       <number>190</number>
+      </property>
+     </widget>
+    </item>
+    <item stretch="1">
+     <!-- Plots area — QWidget, layout populated at runtime -->
+     <widget class="QWidget" name="plots_container">
+      <layout class="QVBoxLayout" name="plots_layout">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <!-- Plugin panel — QWidget, populated at runtime -->
+     <widget class="QWidget" name="plugin_container">
+      <property name="maximumWidth">
+       <number>220</number>
+      </property>
+      <property name="minimumWidth">
+       <number>200</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QToolBar" name="main_toolbar">
+   <property name="windowTitle">
+    <string>Main toolbar</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <!-- Toolbar widgets are added programmatically (port combo, buttons, etc.)
+        because QToolBar widget children cannot be reliably positioned via .ui -->
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>VitalsPanel</class>
+   <extends>QWidget</extends>
+   <header>ui.vitals_panel</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

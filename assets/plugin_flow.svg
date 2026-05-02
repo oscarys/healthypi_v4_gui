@@ -1,0 +1,129 @@
+<svg width="100%" viewBox="0 0 860 460" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>HealthyPi v4 plugin system data flow</title>
+<desc>Data flow from serial port through parser, plugin runner, queues, and into GUI components.</desc>
+
+<style>
+  text { font-family: ui-sans-serif, system-ui, sans-serif; }
+  .label  { font-size: 11px; fill: #94a3b8; }
+  .title  { font-size: 12px; font-weight: 600; fill: #e2e8f0; }
+  .sub    { font-size: 10px; fill: #94a3b8; }
+  .code   { font-size: 10px; fill: #a5b4fc; font-family: ui-monospace, monospace; }
+  .head   { font-size: 14px; font-weight: 600; fill: #e2e8f0; }
+  .thread { font-size: 10px; font-weight: 600; }
+</style>
+
+<rect width="860" height="460" fill="#0f172a" rx="12"/>
+<text class="head" x="430" y="30" text-anchor="middle">HealthyPi v4 — plugin system data flow</text>
+
+<!-- ── Serial thread box ─────────────────────────────────────────────── -->
+<rect x="20" y="46" width="260" height="340" rx="10" fill="#0c1f0c" stroke="#1D9E75" stroke-width="1" stroke-dasharray="5 3"/>
+<text class="thread" x="36" y="64" fill="#1D9E75">Serial reader thread  (daemon)</text>
+
+<!-- Board -->
+<rect x="40" y="76" width="140" height="44" rx="6" fill="#1a2f1a" stroke="#5DCAA5" stroke-width="1"/>
+<text class="title" x="110" y="98" text-anchor="middle">HealthyPi v4 board</text>
+<text class="sub"   x="110" y="112" text-anchor="middle">USB CDC serial</text>
+
+<!-- Parser -->
+<rect x="40" y="152" width="140" height="56" rx="6" fill="#0f4c3a" stroke="#1D9E75" stroke-width="1"/>
+<text class="title" x="110" y="174" text-anchor="middle">HealthyPiParser</text>
+<text class="sub"   x="110" y="190" text-anchor="middle">FSM · 27-byte frame</text>
+<text class="sub"   x="110" y="202" text-anchor="middle">→ HealthyPiSample</text>
+
+<!-- Plugin runner -->
+<rect x="40" y="248" width="140" height="56" rx="6" fill="#1a0f3a" stroke="#7F77DD" stroke-width="1"/>
+<text class="title" x="110" y="270" text-anchor="middle">PluginRunner</text>
+<text class="sub"   x="110" y="286" text-anchor="middle">calls on_sample()</text>
+<text class="sub"   x="110" y="298" text-anchor="middle">per plugin, per sample</text>
+
+<!-- Student plugin -->
+<rect x="20" y="332" width="260" height="46" rx="6" fill="#0c0820" stroke="#7F77DD" stroke-width="1" stroke-dasharray="4 2"/>
+<text class="title" x="150" y="352" text-anchor="middle">YourPlugin(SignalPlugin)</text>
+<text class="code"  x="150" y="368" text-anchor="middle">on_sample(t, sample) → PluginResult</text>
+
+<!-- Arrows serial thread -->
+<line x1="110" y1="120" x2="110" y2="150" stroke="#5DCAA5" stroke-width="1.2" marker-end="url(#arr)"/>
+<text class="sub" x="116" y="138" fill="#5DCAA5">bytes</text>
+<line x1="110" y1="208" x2="110" y2="246" stroke="#5DCAA5" stroke-width="1.2" marker-end="url(#arr)"/>
+<text class="sub" x="116" y="230" fill="#5DCAA5">HealthyPiSample</text>
+<line x1="110" y1="332" x2="110" y2="306" stroke="#7F77DD" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+
+<!-- ── Queues ──────────────────────────────────────────────────────────── -->
+<rect x="306" y="152" width="110" height="44" rx="22" fill="#1e3a5f" stroke="#378ADD" stroke-width="1"/>
+<text class="title" x="361" y="178" text-anchor="middle">data_queue</text>
+
+<rect x="306" y="248" width="110" height="44" rx="22" fill="#2d1f4e" stroke="#7F77DD" stroke-width="1"/>
+<text class="title" x="361" y="274" text-anchor="middle">plugin_queue</text>
+
+<text class="sub" x="361" y="138" text-anchor="middle" fill="#378ADD">Thread-safe Queue</text>
+
+<!-- Arrows → queues -->
+<line x1="180" y1="174" x2="304" y2="174" stroke="#378ADD" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="180" y1="270" x2="304" y2="270" stroke="#7F77DD" stroke-width="1.2" marker-end="url(#arr)"/>
+
+<!-- ── GUI thread box ─────────────────────────────────────────────────── -->
+<rect x="444" y="46" width="396" height="390" rx="10" fill="#0c0c20" stroke="#534AB7" stroke-width="1" stroke-dasharray="5 3"/>
+<text class="thread" x="460" y="64" fill="#7F77DD">GUI thread  (QTimer 40 ms)</text>
+
+<!-- QTimer -->
+<rect x="464" y="76" width="140" height="44" rx="6" fill="#1a0f3a" stroke="#7F77DD" stroke-width="1"/>
+<text class="title" x="534" y="103" text-anchor="middle">QTimer drain</text>
+
+<!-- Plots -->
+<rect x="464" y="156" width="140" height="56" rx="6" fill="#4a1515" stroke="#D85A30" stroke-width="1"/>
+<text class="title" x="534" y="177" text-anchor="middle">Waveform plots</text>
+<text class="sub"   x="534" y="193" text-anchor="middle">ECG · Resp · PPG IR</text>
+<text class="sub"   x="534" y="205" text-anchor="middle">+ annotation markers</text>
+
+<!-- Plugin panel -->
+<rect x="464" y="248" width="140" height="56" rx="6" fill="#1a0f3a" stroke="#7F77DD" stroke-width="1"/>
+<text class="title" x="534" y="269" text-anchor="middle">Plugin panel</text>
+<text class="sub"   x="534" y="285" text-anchor="middle">scalar readouts</text>
+<text class="sub"   x="534" y="297" text-anchor="middle">enable / disable</text>
+
+<!-- Vitals -->
+<rect x="464" y="340" width="140" height="44" rx="6" fill="#0f4c3a" stroke="#1D9E75" stroke-width="1"/>
+<text class="title" x="534" y="367" text-anchor="middle">Vitals cards</text>
+
+<!-- Logger -->
+<rect x="680" y="156" width="140" height="56" rx="6" fill="#3d2a00" stroke="#BA7517" stroke-width="1"/>
+<text class="title" x="750" y="177" text-anchor="middle">CSV logger</text>
+<text class="sub"   x="750" y="193" text-anchor="middle">thread-safe write</text>
+<text class="sub"   x="750" y="205" text-anchor="middle">flush every 256 rows</text>
+
+<!-- Arrows from queues → QTimer -->
+<line x1="416" y1="174" x2="462" y2="98" stroke="#378ADD" stroke-width="1.2" marker-end="url(#arr)"/>
+<line x1="416" y1="270" x2="462" y2="108" stroke="#7F77DD" stroke-width="1.2" marker-end="url(#arr)"/>
+
+<!-- QTimer → plots -->
+<line x1="534" y1="120" x2="534" y2="154" stroke="#D85A30" stroke-width="1.2" marker-end="url(#arr)"/>
+<!-- QTimer → plugin panel (around right) -->
+<path d="M604 98 L630 98 L630 276 L606 276" fill="none" stroke="#7F77DD" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr)"/>
+<!-- QTimer → vitals -->
+<path d="M604 105 L640 105 L640 362 L606 362" fill="none" stroke="#5DCAA5" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr)"/>
+<!-- QTimer → logger -->
+<line x1="604" y1="98" x2="750" y2="154" stroke="#BA7517" stroke-width="1" stroke-dasharray="4 2" marker-end="url(#arr)"/>
+
+<!-- Arrowhead marker def -->
+<defs>
+<marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+
+<!-- ── Legend ──────────────────────────────────────────────────────────── -->
+<line x1="20" y1="406" x2="840" y2="406" stroke="#1e293b" stroke-width="1"/>
+<rect x="20"  y="416" width="12" height="12" rx="2" fill="#0f4c3a" stroke="#1D9E75" stroke-width="1"/>
+<text class="sub" x="38" y="425">Serial / parser</text>
+<rect x="120" y="416" width="12" height="12" rx="2" fill="#1e3a5f" stroke="#378ADD" stroke-width="1"/>
+<text class="sub" x="138" y="425">Queues</text>
+<rect x="200" y="416" width="12" height="12" rx="2" fill="#1a0f3a" stroke="#7F77DD" stroke-width="1"/>
+<text class="sub" x="218" y="425">Plugin system</text>
+<rect x="320" y="416" width="12" height="12" rx="2" fill="#4a1515" stroke="#D85A30" stroke-width="1"/>
+<text class="sub" x="338" y="425">Waveform display</text>
+<rect x="458" y="416" width="12" height="12" rx="2" fill="#3d2a00" stroke="#BA7517" stroke-width="1"/>
+<text class="sub" x="476" y="425">Data logging</text>
+<rect x="564" y="416" width="12" height="12" rx="2" fill="#0f4c3a" stroke="#1D9E75" stroke-width="1"/>
+<text class="sub" x="582" y="425">Vitals display</text>
+<text class="sub" x="680" y="425" fill="#475569">Dashed arrows = periodic QTimer dispatch</text>
+</svg>
