@@ -12,7 +12,7 @@ A PyQt6 desktop application for real-time acquisition, visualisation, and loggin
 
 ## Screenshots
 
-![HealthyPi v4 Monitor — main window](assets/screenshot_main.png)
+![HealthyPi v4 Monitor — main window](assets/gui_main.png)
 
 ---
 
