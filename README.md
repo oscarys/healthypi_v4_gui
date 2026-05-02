@@ -1,3 +1,5 @@
+<img src="assets/logos_uami_ibero.png" alt="Universidad Autónoma Metropolitana, Unidad Iztapalapa; Universidad Iberoamericana, Campus CDMX" width="420"/>
+
 # HealthyPi v4 Monitor
 
 A PyQt6 desktop application for real-time acquisition, visualisation, and logging of physiological signals from the [ProtoCentral HealthyPi v4](https://github.com/Protocentral/protocentral_healthypi_v4) board.
