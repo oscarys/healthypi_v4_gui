@@ -4,7 +4,7 @@
 
 A PyQt6 desktop application for real-time acquisition, visualisation, and logging of physiological signals from the [ProtoCentral HealthyPi v4](https://github.com/Protocentral/protocentral_healthypi_v4) board.
 
-> Built for the **Advanced Instrumentation I** course at Universidad Iberoamericana, Campus Ciudad de México. Designed as a fully open teaching tool — students can add real-time signal processing algorithms through a simple plugin interface.
+> Designed by Oscar Yáñez Suárez as a fully open teaching tool — students can add real-time signal processing algorithms through a simple plugin interface.
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue)](https://python.org)
