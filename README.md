@@ -134,7 +134,7 @@ from core.plugin_base import SignalPlugin, PluginResult, Annotation
 
 class MyPlugin(SignalPlugin):
     name    = "My plugin"   # shown in the plugin panel
-    enabled = True
+    enabled = False         # starts unchecked; user enables in the plugin panel
 
     def on_connect(self, sample_rate: float) -> None:
         self.fs = sample_rate   # initialise filter state here

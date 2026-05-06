@@ -99,8 +99,9 @@ class SignalPlugin(ABC):
     #: Human-readable name shown in the plugin panel
     name: str = "Unnamed plugin"
 
-    #: Whether the plugin starts enabled
-    enabled: bool = True
+    #: Whether the plugin starts enabled.
+    #: Default is False — students opt in by checking the box in the plugin panel.
+    enabled: bool = False
 
     def on_connect(self, sample_rate: float) -> None:
         """

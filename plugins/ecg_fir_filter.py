@@ -72,7 +72,7 @@ class ECGFIRFilter(SignalPlugin):
     """
 
     name    = "ECG FIR filter"
-    enabled = True
+    enabled = False
 
     def __init__(self, name: str = "ECG FIR filter",
                  cutoff_hz: float = CUTOFF_HZ,

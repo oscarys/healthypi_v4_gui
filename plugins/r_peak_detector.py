@@ -46,7 +46,7 @@ class RPeakDetector(SignalPlugin):
     """Pan-Tompkins-inspired real-time R-peak detector."""
 
     name    = "R-peak detector"
-    enabled = True
+    enabled = False
 
     def on_connect(self, sample_rate: float) -> None:
         self._fs            = sample_rate

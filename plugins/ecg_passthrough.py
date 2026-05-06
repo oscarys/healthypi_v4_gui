@@ -20,7 +20,7 @@ from core.plugin_base import SignalPlugin, PluginResult
 class ECGPassthrough(SignalPlugin):
 
     name    = "ECG passthrough"
-    enabled = True
+    enabled = False
 
     def on_connect(self, sample_rate: float) -> None:
         pass

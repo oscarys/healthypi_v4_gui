@@ -58,7 +58,7 @@ class DicroticNotchDetector(SignalPlugin):
     """Detects systolic peaks and dicrotic notch in the PPG IR waveform."""
 
     name    = "Dicrotic notch detector"
-    enabled = True
+    enabled = False
 
     def on_connect(self, sample_rate: float) -> None:
         self._fs     = sample_rate
