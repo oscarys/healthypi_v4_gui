@@ -1,8 +1,10 @@
+<img src="assets/logos_uami_ibero.png" alt="Universidad Autónoma Metropolitana, Unidad Iztapalapa; Universidad Iberoamericana, Campus CDMX" width="420"/>
+
 # HealthyPi v4 Monitor
 
 A PyQt6 desktop application for real-time acquisition, visualisation, and logging of physiological signals from the [ProtoCentral HealthyPi v4](https://github.com/Protocentral/protocentral_healthypi_v4) board.
 
-> Built for the **Advanced Instrumentation I** course at Universidad Iberoamericana, Campus Ciudad de México. Designed as a fully open teaching tool — students can add real-time signal processing algorithms through a simple plugin interface.
+> Designed by Oscar Yáñez Suárez as a fully open teaching tool — students can add real-time signal processing algorithms through a simple plugin interface.
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue)](https://python.org)
@@ -12,12 +14,7 @@ A PyQt6 desktop application for real-time acquisition, visualisation, and loggin
 
 ## Screenshots
 
-<!-- Add your screenshot here once you have one.
-     Suggested capture: connected board, ECG + PPG traces running,
-     R-peak markers on ECG, dicrotic notch markers on PPG,
-     plugin panel showing RR interval and FIR filter plot visible.
-     Save as: assets/screenshot_main.png
--->
+![HealthyPi v4 Monitor — main window](assets/gui_main.png)
 
 ---
 
@@ -32,6 +29,7 @@ A PyQt6 desktop application for real-time acquisition, visualisation, and loggin
 - **Adjustable display window** — 2 to 30 seconds of scrolling history
 - **Editable UI layout** — toolbar and panels defined in `.ui` files, editable in Qt Designer
 - **Bilingual UI** — English and Spanish at runtime via Settings → Language; choice persisted across sessions
+- **Dark theme** throughout
 
 ---
 
@@ -94,6 +92,7 @@ healthypi_v4_gui/
 │   └── ecg_passthrough.py       Identity plugin — useful for pipeline debugging
 ├── resources/
 │   └── i18n.py                  EN/ES translation dictionaries + tr() function
+└── assets/
     ├── packet_structure.svg
     └── plugin_flow.svg
 ```
@@ -319,6 +318,8 @@ jupyter notebook ReadHealthyPi4CSVs.ipynb
 Set the `FILE` variable in the first cell to the path of your recording before running.
 
 ---
+
+## UI layout files
 
 The main window layout and vitals panel are defined in `.ui` files under `ui/` and loaded at runtime with `PyQt6.uic.loadUi()`. You can open and edit them in Qt Designer without touching Python.
 
