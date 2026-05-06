@@ -1,10 +1,8 @@
-<img src="assets/logos_uami_ibero.png" alt="Universidad Autónoma Metropolitana, Unidad Iztapalapa; Universidad Iberoamericana, Campus CDMX" width="420"/>
-
 # HealthyPi v4 Monitor
 
 A PyQt6 desktop application for real-time acquisition, visualisation, and logging of physiological signals from the [ProtoCentral HealthyPi v4](https://github.com/Protocentral/protocentral_healthypi_v4) board.
 
-> Designed by Oscar Yáñez Suárez as a fully open teaching tool — students can add real-time signal processing algorithms through a simple plugin interface.
+> Built for the **Advanced Instrumentation I** course at Universidad Iberoamericana, Campus Ciudad de México. Designed as a fully open teaching tool — students can add real-time signal processing algorithms through a simple plugin interface.
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue)](https://python.org)
@@ -14,7 +12,12 @@ A PyQt6 desktop application for real-time acquisition, visualisation, and loggin
 
 ## Screenshots
 
-![HealthyPi v4 Monitor — main window](assets/gui_main.png)
+<!-- Add your screenshot here once you have one.
+     Suggested capture: connected board, ECG + PPG traces running,
+     R-peak markers on ECG, dicrotic notch markers on PPG,
+     plugin panel showing RR interval and FIR filter plot visible.
+     Save as: assets/screenshot_main.png
+-->
 
 ---
 
@@ -28,7 +31,7 @@ A PyQt6 desktop application for real-time acquisition, visualisation, and loggin
 - **Plugin interface** — add real-time DSP in a single Python file; plugins can output event annotations, scalar readouts, and continuous waveform signals that appear as extra scrolling plots and CSV columns
 - **Adjustable display window** — 2 to 30 seconds of scrolling history
 - **Editable UI layout** — toolbar and panels defined in `.ui` files, editable in Qt Designer
-- **Dark theme** throughout
+- **Bilingual UI** — English and Spanish at runtime via Settings → Language; choice persisted across sessions
 
 ---
 
@@ -89,7 +92,8 @@ healthypi_v4_gui/
 │   ├── ppg_notch_detector.py    Dicrotic notch detector
 │   ├── ecg_fir_filter.py        Windowed-sinc FIR low-pass filter (signal output)
 │   └── ecg_passthrough.py       Identity plugin — useful for pipeline debugging
-└── assets/
+├── resources/
+│   └── i18n.py                  EN/ES translation dictionaries + tr() function
     ├── packet_structure.svg
     └── plugin_flow.svg
 ```

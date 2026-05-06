@@ -35,12 +35,12 @@ from pathlib import Path
 import numpy as np
 import pyqtgraph as pg
 from PyQt6.QtCore import QTimer, Qt
-from PyQt6.QtGui import QFont, QColor, QPalette
+from PyQt6.QtGui import QFont, QColor, QPalette, QAction
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QGridLayout, QLabel, QPushButton, QComboBox, QFileDialog,
     QGroupBox, QSizePolicy, QStatusBar, QFrame, QToolBar, QMessageBox,
-    QSpinBox, QCheckBox, QScrollArea,
+    QSpinBox, QCheckBox, QScrollArea, QMenu, QMenuBar,
 )
 
 from core.serial_reader import SerialReaderThread
@@ -52,6 +52,14 @@ from plugins.r_peak_detector import RPeakDetector
 from plugins.ppg_notch_detector import DicroticNotchDetector
 from plugins.ecg_fir_filter import ECGFIRFilter
 from plugins.ecg_passthrough import ECGPassthrough
+
+from resources.i18n import (
+    tr, set_language, current_language, load_saved_language,
+    language_changed, LANG_NAMES,
+)
+
+# Load persisted language before any widget is built
+load_saved_language()
 
 # ── Display constants ────────────────────────────────────────────────────────
 DISPLAY_SECONDS  = 6
@@ -86,26 +94,32 @@ CHANNEL_PLOT = {
 
 # ─────────────────────────────────────────────────────────────────────────────
 class VitalCard(QFrame):
-    def __init__(self, label, unit, color=TEXT_PRIMARY):
+    def __init__(self, label_key: str, unit_key: str, color=TEXT_PRIMARY):
         super().__init__()
+        self._label_key = label_key
+        self._unit_key  = unit_key
         self.setObjectName("VitalCard")
         self.setStyleSheet(f"#VitalCard {{ background: {CARD_COLOR}; border-radius: 10px; border: 1px solid #1a4a7a; }}")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 8, 12, 8)
         layout.setSpacing(2)
-        lbl = QLabel(label)
-        lbl.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 11px; font-weight: 500;")
-        lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._lbl = QLabel(tr(label_key))
+        self._lbl.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 11px; font-weight: 500;")
+        self._lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.value_lbl = QLabel("---")
         self.value_lbl.setStyleSheet(
             f"color: {color}; font-size: 32px; font-weight: 700; font-family: monospace;")
         self.value_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        unit_lbl = QLabel(unit)
-        unit_lbl.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 10px;")
-        unit_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(lbl)
+        self._unit_lbl = QLabel(tr(unit_key))
+        self._unit_lbl.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 10px;")
+        self._unit_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._lbl)
         layout.addWidget(self.value_lbl)
-        layout.addWidget(unit_lbl)
+        layout.addWidget(self._unit_lbl)
+
+    def retranslate(self):
+        self._lbl.setText(tr(self._label_key))
+        self._unit_lbl.setText(tr(self._unit_key))
 
     def set_value(self, val, fmt="{}", color=None):
         self.value_lbl.setText(fmt.format(val))
@@ -240,10 +254,11 @@ class PluginPanel(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(4)
 
-        title = QLabel("Signal Plugins")
+        title = QLabel(tr("plugin_panel_title"))
         title.setStyleSheet(
             f"color: {TEXT_SECONDARY}; font-size: 11px; font-weight: 600; padding: 4px 0;")
         outer.addWidget(title)
+        self._title_lbl = title
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -264,6 +279,9 @@ class PluginPanel(QWidget):
             self._add_plugin_card(plugin)
 
         self._inner_layout.addStretch()
+
+    def retranslate(self):
+        self._title_lbl.setText(tr("plugin_panel_title"))
 
     def _add_plugin_card(self, plugin):
         box = QGroupBox()
@@ -324,7 +342,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("HealthyPi v4 Monitor")
+        self.setWindowTitle(tr("window_title"))
         self.resize(1400, 800)
 
         self._plugins = [RPeakDetector(), DicroticNotchDetector(), ECGFIRFilter()]
@@ -351,6 +369,9 @@ class MainWindow(QMainWindow):
         self._apply_dark_palette()
         self._build_ui()
         self._refresh_ports()
+
+        # Connect i18n signal — retranslate UI on language switch
+        language_changed.connect(self._retranslate_ui)
 
         self._timer = QTimer()
         self._timer.setInterval(GUI_TIMER_MS)
@@ -415,31 +436,34 @@ class MainWindow(QMainWindow):
         tb.setMovable(False)
         self.addToolBar(tb)
 
-        tb.addWidget(QLabel("  Port:"))
+        self._port_label = QLabel(tr("port_label"))
+        tb.addWidget(self._port_label)
         self.port_combo = QComboBox()
         self.port_combo.setMinimumWidth(140)
         tb.addWidget(self.port_combo)
 
-        btn_r = QPushButton("⟳")
-        btn_r.setFixedWidth(32)
-        btn_r.clicked.connect(self._refresh_ports)
-        tb.addWidget(btn_r)
+        self._btn_refresh = QPushButton("⟳")
+        self._btn_refresh.setFixedWidth(32)
+        self._btn_refresh.setToolTip(tr("btn_refresh_tip"))
+        self._btn_refresh.clicked.connect(self._refresh_ports)
+        tb.addWidget(self._btn_refresh)
         tb.addSeparator()
 
-        self.connect_btn = QPushButton("▶  Connect")
+        self.connect_btn = QPushButton(tr("btn_connect"))
         self.connect_btn.setCheckable(True)
         self.connect_btn.clicked.connect(self._toggle_connection)
         tb.addWidget(self.connect_btn)
         tb.addSeparator()
 
-        self.record_btn = QPushButton("⏺  Record")
+        self.record_btn = QPushButton(tr("btn_record"))
         self.record_btn.setCheckable(True)
         self.record_btn.setEnabled(False)
         self.record_btn.clicked.connect(self._toggle_recording)
         tb.addWidget(self.record_btn)
         tb.addSeparator()
 
-        tb.addWidget(QLabel("  Window (s):"))
+        self._window_label = QLabel(tr("window_label"))
+        tb.addWidget(self._window_label)
         self.window_spin = QSpinBox()
         self.window_spin.setRange(2, 30)
         self.window_spin.setValue(DISPLAY_SECONDS)
@@ -451,30 +475,47 @@ class MainWindow(QMainWindow):
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         tb.addWidget(spacer)
 
-        self.lead_indicator = QLabel("  ⬤  LEAD OFF  ")
+        self.lead_indicator = QLabel(tr("lead_off"))
         self.lead_indicator.setStyleSheet(
             f"color: {DANGER_COLOR}; font-weight: 700; font-size: 12px;")
         tb.addWidget(self.lead_indicator)
 
+        # ── Settings menu bar ──────────────────────────────────────────────
+        menubar = self.menuBar()
+        menubar.setNativeMenuBar(False)
+        self._menu_settings = menubar.addMenu(tr("menu_settings"))
+        lang_menu = self._menu_settings.addMenu(tr("menu_language"))
+        self._lang_actions: dict[str, QAction] = {}
+        for code, name in LANG_NAMES.items():
+            action = QAction(name, self, checkable=True)
+            action.setData(code)
+            action.setChecked(code == current_language())
+            action.triggered.connect(self._on_language_action)
+            lang_menu.addAction(action)
+            self._lang_actions[code] = action
+        self._lang_menu = lang_menu
+
     def _build_vitals_panel(self):
-        panel = QGroupBox("Vitals")
+        panel = QGroupBox(tr("group_vitals"))
         panel.setFixedWidth(190)
+        self._group_vitals = panel
         layout = QVBoxLayout(panel)
         layout.setSpacing(8)
-        self.card_hr   = VitalCard("Heart Rate",  "BPM", ACCENT_ECG)
-        self.card_spo2 = VitalCard("SpO₂",        "%",   "#5dade2")
-        self.card_rr   = VitalCard("Resp Rate",   "BPM", ACCENT_RESP)
-        self.card_temp = VitalCard("Temperature", "°C",  "#f39c12")
+        self.card_hr   = VitalCard("card_hr_label",   "card_hr_unit",   ACCENT_ECG)
+        self.card_spo2 = VitalCard("card_spo2_label", "card_spo2_unit", "#5dade2")
+        self.card_rr   = VitalCard("card_rr_label",   "card_rr_unit",   ACCENT_RESP)
+        self.card_temp = VitalCard("card_temp_label",  "card_temp_unit", "#f39c12")
         for c in (self.card_hr, self.card_spo2, self.card_rr, self.card_temp):
             layout.addWidget(c)
         layout.addStretch()
 
-        stats_box = QGroupBox("Session")
+        stats_box = QGroupBox(tr("group_session"))
+        self._group_session = stats_box
         sg = QGridLayout(stats_box)
         sg.setSpacing(2)
 
-        def stat_row(label, row):
-            l = QLabel(label)
+        def stat_row(key, row):
+            l = QLabel(tr(key))
             l.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 10px;")
             v = QLabel("—")
             v.setStyleSheet(
@@ -482,12 +523,12 @@ class MainWindow(QMainWindow):
             v.setAlignment(Qt.AlignmentFlag.AlignRight)
             sg.addWidget(l, row, 0)
             sg.addWidget(v, row, 1)
-            return v
+            return l, v
 
-        self.lbl_samples  = stat_row("Samples:",  0)
-        self.lbl_rate     = stat_row("Rate (Hz):", 1)
-        self.lbl_log_rows = stat_row("Log rows:",  2)
-        self.lbl_log_time = stat_row("Log time:",  3)
+        self._lbl_samples_key,  self.lbl_samples  = stat_row("stat_samples",  0)
+        self._lbl_rate_key,     self.lbl_rate      = stat_row("stat_rate",     1)
+        self._lbl_log_rows_key, self.lbl_log_rows  = stat_row("stat_log_rows", 2)
+        self._lbl_log_time_key, self.lbl_log_time  = stat_row("stat_log_time", 3)
         layout.addWidget(stats_box)
         return panel
 
@@ -531,10 +572,10 @@ class MainWindow(QMainWindow):
     def _build_status_bar(self):
         sb = QStatusBar()
         self.setStatusBar(sb)
-        self.status_port = QLabel("Port: —")
-        self.status_conn = QLabel("Disconnected")
+        self.status_port = QLabel(tr("status_port_idle"))
+        self.status_conn = QLabel(tr("status_disconnected"))
         self.status_conn.setStyleSheet(f"color: {DANGER_COLOR};")
-        self.status_log  = QLabel("Logging: off")
+        self.status_log  = QLabel(tr("status_log_off"))
         sb.addWidget(self.status_port)
         sb.addWidget(QLabel("  |  "))
         sb.addWidget(self.status_conn)
@@ -550,7 +591,7 @@ class MainWindow(QMainWindow):
         is preserved when a connected board is already chosen.
         """
         ports = SerialReaderThread.list_ports()
-        display = ports if ports else ["(no ports found)"]
+        display = ports if ports else [tr("no_ports")]
 
         if display == self._known_ports:
             return   # nothing changed — leave combo alone
@@ -569,13 +610,67 @@ class MainWindow(QMainWindow):
 
         self.port_combo.blockSignals(False)
 
+    def _on_language_action(self):
+        action = self.sender()
+        code   = action.data()
+        if code == current_language():
+            return
+        set_language(code)   # triggers language_changed → _retranslate_ui
+
+    def _retranslate_ui(self):
+        """Rebuild all user-visible strings after a language switch."""
+        self.setWindowTitle(tr("window_title"))
+
+        # Toolbar
+        self._port_label.setText(tr("port_label"))
+        self._btn_refresh.setToolTip(tr("btn_refresh_tip"))
+        self._window_label.setText(tr("window_label"))
+        self.connect_btn.setText(
+            tr("btn_disconnect") if self._connected else tr("btn_connect"))
+        self.record_btn.setText(tr("btn_record"))
+        if not self._connected:
+            self.lead_indicator.setText(tr("lead_off"))
+
+        # Menu bar
+        self._menu_settings.setTitle(tr("menu_settings"))
+        self._lang_menu.setTitle(tr("menu_language"))
+        for code, action in self._lang_actions.items():
+            action.setChecked(code == current_language())
+
+        # Vitals panel
+        self._group_vitals.setTitle(tr("group_vitals"))
+        self._group_session.setTitle(tr("group_session"))
+        for card in (self.card_hr, self.card_spo2, self.card_rr, self.card_temp):
+            card.retranslate()
+        self._lbl_samples_key.setText(tr("stat_samples"))
+        self._lbl_rate_key.setText(tr("stat_rate"))
+        self._lbl_log_rows_key.setText(tr("stat_log_rows"))
+        self._lbl_log_time_key.setText(tr("stat_log_time"))
+
+        # Plugin panel
+        self.plugin_panel.retranslate()
+
+        # Status bar
+        self.status_port.setText(
+            tr("status_port_idle") if not self._connected
+            else tr("status_port", self.port_combo.currentText()))
+        self.status_conn.setText(
+            tr("status_connected") if self._connected
+            else tr("status_disconnected"))
+        if not self._logger.is_active:
+            self.status_log.setText(tr("status_log_off"))
+
+        # Force port list refresh so "(no ports found)" retranslates if visible
+        self._known_ports = []
+        self._refresh_ports()
+
     def _toggle_connection(self, checked):
         self._start_capture() if checked else self._stop_capture()
 
     def _start_capture(self):
         port = self.port_combo.currentText()
         if not port or port.startswith("("):
-            QMessageBox.warning(self, "No port", "Please select a valid serial port.")
+            QMessageBox.warning(self, tr("dlg_no_port_title"), tr("dlg_no_port_msg"))
             self.connect_btn.setChecked(False)
             return
 
@@ -596,10 +691,10 @@ class MainWindow(QMainWindow):
         self._sample_count  = 0
         self._rate_count    = 0
         self._rate_t0       = time.monotonic()
-        self.connect_btn.setText("■  Disconnect")
+        self.connect_btn.setText(tr("btn_disconnect"))
         self.record_btn.setEnabled(True)
-        self.status_port.setText(f"Port: {port}")
-        self.status_conn.setText("Connected")
+        self.status_port.setText(tr("status_port", port))
+        self.status_conn.setText(tr("status_connected"))
         self.status_conn.setStyleSheet(f"color: {SUCCESS_COLOR};")
         self._clear_signal_plots()
         for p in (self.plot_ecg, self.plot_resp, self.plot_ppg):
@@ -616,11 +711,11 @@ class MainWindow(QMainWindow):
             self._update_log_status()
         self._connected = False
         self._clear_signal_plots()
-        self.connect_btn.setText("▶  Connect")
+        self.connect_btn.setText(tr("btn_connect"))
         self.record_btn.setEnabled(False)
-        self.status_conn.setText("Disconnected")
+        self.status_conn.setText(tr("status_disconnected"))
         self.status_conn.setStyleSheet(f"color: {DANGER_COLOR};")
-        self.lead_indicator.setText("  ⬤  LEAD OFF  ")
+        self.lead_indicator.setText(tr("lead_off"))
         self.lead_indicator.setStyleSheet(
             f"color: {DANGER_COLOR}; font-weight: 700; font-size: 12px;")
 
@@ -631,8 +726,8 @@ class MainWindow(QMainWindow):
                 f"hpi4_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             )
             path, _ = QFileDialog.getSaveFileName(
-                self, "Save recording to…", str(default),
-                "CSV files (*.csv);;All files (*)"
+                self, tr("dlg_save_recording"), str(default),
+                tr("dlg_csv_filter"),
             )
             if not path:
                 self.record_btn.setChecked(False)
@@ -641,14 +736,14 @@ class MainWindow(QMainWindow):
                 path,
                 signal_channels=list(self._plugin_signal_plots.keys()),
             )
-            self.status_log.setText(f"Logging → {Path(actual).name}")
+            self.status_log.setText(tr("status_logging", Path(actual).name))
             self.status_log.setStyleSheet(f"color: {DANGER_COLOR};")
         else:
             self._logger.stop()
             self._update_log_status()
 
     def _update_log_status(self):
-        self.status_log.setText("Logging: off")
+        self.status_log.setText(tr("status_log_off"))
         self.status_log.setStyleSheet(f"color: {TEXT_SECONDARY};")
 
     def _on_window_changed(self, seconds):
@@ -669,7 +764,7 @@ class MainWindow(QMainWindow):
 
         while not self._error_q.empty():
             msg = self._error_q.get_nowait()
-            QMessageBox.critical(self, "Serial error", msg)
+            QMessageBox.critical(self, tr("dlg_serial_err_title"), msg)
             self._stop_capture()
             self.connect_btn.setChecked(False)
             return
@@ -706,7 +801,7 @@ class MainWindow(QMainWindow):
 
             lead_on = s.leads_on
             self.lead_indicator.setText(
-                "  ⬤  LEADS ON  " if lead_on else "  ⬤  LEAD OFF  ")
+                tr("lead_on") if lead_on else tr("lead_off"))
             self.lead_indicator.setStyleSheet(
                 f"color: {SUCCESS_COLOR if lead_on else DANGER_COLOR}; "
                 f"font-weight: 700; font-size: 12px;")
