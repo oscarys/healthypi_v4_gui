@@ -36,7 +36,7 @@ A PyQt6 desktop application for real-time acquisition, visualisation, and loggin
 ## Installation
 
 ```bash
-git clone https://github.com/<your-username>/healthypi_v4_gui.git
+git clone https://github.com/oscarys/healthypi_v4_gui.git
 cd healthypi_v4_gui
 pip install -r requirements.txt
 ```
