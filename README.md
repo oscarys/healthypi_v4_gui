@@ -105,7 +105,7 @@ WSL2 does not see USB devices by default, so the board has to be **forwarded** i
    ```bash
    sudo apt update
    sudo apt install -y python3 python3-venv python3-pip git libxcb-cursor0 libxkbcommon-x11-0 libgl1
-   git clone https://github.com/<your-username>/healthypi_v4_gui.git
+   git clone https://github.com/oscarys/healthypi_v4_gui.git
    cd healthypi_v4_gui
    python3 -m venv .venv
    source .venv/bin/activate
@@ -125,7 +125,7 @@ WSL2 does not see USB devices by default, so the board has to be **forwarded** i
 2. **Install the app:**
 
    ```bash
-   git clone https://github.com/<your-username>/healthypi_v4_gui.git
+   git clone https://github.com/oscarys/healthypi_v4_gui.git
    cd healthypi_v4_gui
    python3 -m venv .venv
    source .venv/bin/activate
@@ -145,7 +145,7 @@ WSL2 does not see USB devices by default, so the board has to be **forwarded** i
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip git libxcb-cursor0
 
-git clone https://github.com/<your-username>/healthypi_v4_gui.git
+git clone https://github.com/oscarys/healthypi_v4_gui.git
 cd healthypi_v4_gui
 python3 -m venv .venv
 source .venv/bin/activate
