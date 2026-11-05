@@ -27,33 +27,170 @@ A PyQt6 desktop application for real-time acquisition, visualisation, and loggin
 - **CSV data logging** — timestamped, auto-named files; plugin signal columns included automatically
 - **Plugin interface** — add real-time DSP in a single Python file; plugins can output event annotations, scalar readouts, and continuous waveform signals that appear as extra scrolling plots and CSV columns
 - **Adjustable display window** — 2 to 30 seconds of scrolling history
+- **Bilingual interface** — English / Spanish, switchable at runtime from *Settings → Language* and remembered between sessions
 - **Editable UI layout** — toolbar and panels defined in `.ui` files, editable in Qt Designer
-- **Bilingual UI** — English and Spanish at runtime via Settings → Language; choice persisted across sessions
 - **Dark theme** throughout
 
 ---
 
 ## Installation
 
+You need **Python 3.11 or newer** and a USB cable to the HealthyPi v4. Pick your system:
+
+| System | Go to |
+|--------|-------|
+| Windows 10 / 11 (native) | [Windows](#windows-native) |
+| Windows with WSL2 | [Windows + WSL2](#windows-with-wsl2) |
+| macOS | [macOS](#macos) |
+| Linux | [Linux](#linux) |
+
+Whatever the system, the app is installed inside a **virtual environment**, which avoids most "wrong Python / wrong pip" problems.
+
+### Windows (native)
+
+1. **Install Python 3.11+** from [python.org/downloads](https://www.python.org/downloads/windows/) (recommended) and tick **“Add python.exe to PATH”** on the first installer page.
+   The Microsoft Store version also works, but if `python` opens the Store or does nothing, turn off *Settings → Apps → Advanced app settings → App execution aliases → python.exe*, or use the `py` launcher below.
+2. **Get the code** — install [Git for Windows](https://git-scm.com/download/win), or download the ZIP from GitHub and unzip it.
+3. **Open PowerShell** in the project folder and run:
+
+   ```powershell
+   git clone https://github.com/<your-username>/healthypi_v4_gui.git
+   cd healthypi_v4_gui
+   py -3 -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+   ```
+
+   If activation fails with *“running scripts is disabled on this system”*, allow scripts for your user only (no admin needed) and retry:
+
+   ```powershell
+   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+   ```
+
+   Using **Command Prompt** instead? Activate with `.venv\Scripts\activate.bat`.
+4. **Serial driver and port.** Plug in the board, open **Device Manager → Ports (COM & LPT)**. You should see *Silicon Labs CP210x USB to UART Bridge (COMx)*; `COMx` is what you select in the app.
+   - No entry, or a yellow warning icon under *Other devices*? Install the [Silicon Labs CP210x driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers) (use the “Universal Windows Driver”), then replug the board.
+   - Windows normally needs no special permission to open a COM port. “Access is denied” means **another program already has the port open** (Arduino IDE serial monitor, PuTTY, another instance of this app) — close it.
+   - Use a **data** USB cable; charge-only cables show no port at all.
+5. Run the app (with the venv active): `python main.py`
+
+> **Next time:** open PowerShell in the folder, run `.\.venv\Scripts\Activate.ps1`, then `python main.py`.
+
+### Windows with WSL2
+
+WSL2 does not see USB devices by default, so the board has to be **forwarded** into Linux with [usbipd-win](https://learn.microsoft.com/windows/wsl/connect-usb). The GUI also needs WSLg (Windows 11, or Windows 10 22H2 with a current WSL).
+
+> **Simplest option:** if you only want to *use* the app, install it natively on Windows (previous section). Use WSL2 only if you specifically want a Linux environment.
+
+1. **In Windows (PowerShell as Administrator), once:**
+
+   ```powershell
+   wsl --update
+   winget install --interactive --exact dorssel.usbipd-win
+   ```
+
+   Restart the terminal afterwards.
+2. **Every time you plug the board in** (admin PowerShell):
+
+   ```powershell
+   usbipd list                          # find the CP210x line, note its BUSID (e.g. 2-3)
+   usbipd bind --busid 2-3              # one time only per device
+   usbipd attach --wsl --busid 2-3      # repeat after every replug / reboot
+   ```
+
+   While attached, the board **disappears from Windows** (no COM port) and appears in Linux.
+3. **In the WSL2 Ubuntu terminal:**
+
+   ```bash
+   sudo apt update
+   sudo apt install -y python3 python3-venv python3-pip git libxcb-cursor0 libxkbcommon-x11-0 libgl1
+   git clone https://github.com/<your-username>/healthypi_v4_gui.git
+   cd healthypi_v4_gui
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   sudo usermod -aG dialout $USER       # then run `wsl --shutdown` in PowerShell and reopen Ubuntu
+   ls /dev/ttyUSB*                      # should list /dev/ttyUSB0
+   python main.py
+   ```
+
+   If `/dev/ttyUSB0` is missing, the CP210x kernel module may not be in your WSL kernel; run `wsl --update` and check again. Keep the project inside the Linux filesystem (`~/`), not under `/mnt/c/`, for speed.
+
+### macOS
+
+1. **Install Python 3.11+** (the system Python 3.9 that ships with the Command Line Tools is too old). Either:
+   - **Homebrew** (recommended): install from [brew.sh](https://brew.sh), then `brew install python@3.12 git`
+   - **python.org** installer: [python.org/downloads/macos](https://www.python.org/downloads/macos/). Then run **Install Certificates.command** (in `/Applications/Python 3.x/`) if pip reports SSL errors.
+2. **Install the app:**
+
+   ```bash
+   git clone https://github.com/<your-username>/healthypi_v4_gui.git
+   cd healthypi_v4_gui
+   python3 -m venv .venv
+   source .venv/bin/activate
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+   python main.py
+   ```
+
+   With Homebrew Python, `pip install` outside a venv fails with *“externally-managed-environment”* — the venv above is the fix. Use `python3.12 -m venv .venv` if `python3` still points at an old version (`python3 --version` to check).
+3. **Serial port.** Recent macOS includes the CP210x driver, and no permission prompt is needed. The board appears as `/dev/cu.SLAB_USBtoUART` or `/dev/cu.usbserial-XXXX`; choose the **`cu.`** entry (not `tty.`). If no port shows up, install the [Silicon Labs driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers), approve it in *System Settings → Privacy & Security*, and replug.
+   On Apple Silicon Macs use a native (arm64) Python; Homebrew and python.org both provide one.
+
+### Linux
+
 ```bash
-git clone https://github.com/oscarys/healthypi_v4_gui.git
+# Debian / Ubuntu (package names differ on other distros)
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip git libxcb-cursor0
+
+git clone https://github.com/<your-username>/healthypi_v4_gui.git
 cd healthypi_v4_gui
-pip install -r requirements.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 ```
 
-**Linux** — add yourself to the `dialout` group if you get a serial permission error:
+- **Serial permission** (`Permission denied: '/dev/ttyUSB0'`): add yourself to the group that owns the port, then **log out and back in**:
+
+  ```bash
+  sudo usermod -aG dialout $USER     # Debian/Ubuntu/Fedora; on Arch the group is `uucp`
+  groups                             # should now include dialout
+  ```
+- If the port vanishes seconds after plugging in, `brltty` (braille daemon) or ModemManager may be grabbing it: `sudo apt remove brltty`, or `sudo systemctl disable --now ModemManager`.
+- Error *“Could not load the Qt platform plugin “xcb””*: install `libxcb-cursor0` (as above). On Wayland-only systems also try `QT_QPA_PLATFORM=wayland python main.py`.
+
+### Check your installation
+
+With the virtual environment active, run this one-liner. It should print the versions and every serial port the system can see (your board must be among them):
 
 ```bash
-sudo usermod -aG dialout $USER   # log out and back in after
+python -c "import sys, PyQt6.QtCore as q, pyqtgraph, serial, numpy; from serial.tools import list_ports; print(sys.version.split()[0], 'Qt', q.QT_VERSION_STR); [print(p.device, '-', p.description) for p in list_ports.comports()]"
 ```
 
-**macOS** — no extra steps; the CP210x driver ships with macOS 12+.
+Expected output looks like `3.12.4 Qt 6.7.2` followed by e.g. `COM3 - Silicon Labs CP210x USB to UART Bridge (COM3)`.
 
-**Windows** — install the [Silicon Labs CP210x driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers) if the port does not appear.
+### Troubleshooting
+
+| Symptom | Likely cause and fix |
+|---------|----------------------|
+| `python` is not recognised / opens the Microsoft Store (Windows) | Python not on PATH or Store alias intercepting. Use `py -3`, reinstall ticking “Add to PATH”, or disable the App execution alias. |
+| `Activate.ps1 cannot be loaded… scripts is disabled` | `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or use `activate.bat` from Command Prompt. |
+| `No matching distribution found for PyQt6` | Python older than 3.9 or a 32-bit Python. Install a 64-bit Python 3.11+. |
+| `externally-managed-environment` (macOS/Linux) | You skipped the virtual environment. Create and activate `.venv` first. |
+| `ModuleNotFoundError: No module named 'PyQt6'` | The venv is not active, or you installed with a different Python. Activate it and use `python -m pip install -r requirements.txt`. |
+| Serial port list is empty | Cable is charge-only, driver missing (Windows/macOS), board not forwarded (WSL2), or board not powered. Replug; the list refreshes automatically. |
+| `Permission denied` on `/dev/ttyUSB0` | Not in `dialout`/`uucp` group, or you did not log out and back in. |
+| `Access is denied` / `Resource busy` | Another program holds the port. Close serial monitors and other instances of this app. |
+| Port opens but no data | Wrong port, or board running different firmware. Baud rate must be 115200; verify the board streams with the Arduino IDE serial monitor, then close it. |
+| `xcb` Qt plugin error (Linux/WSL2) | `sudo apt install libxcb-cursor0`. |
 
 ---
 
 ## Running
+
+With the virtual environment active (`source .venv/bin/activate` or `.\.venv\Scripts\Activate.ps1`):
 
 ```bash
 python main.py
@@ -91,7 +228,7 @@ healthypi_v4_gui/
 │   ├── ecg_fir_filter.py        Windowed-sinc FIR low-pass filter (signal output)
 │   └── ecg_passthrough.py       Identity plugin — useful for pipeline debugging
 ├── resources/
-│   └── i18n.py                  EN/ES translation dictionaries + tr() function
+│   └── i18n.py                  Runtime EN/ES dictionary translations — tr(), set_language()
 └── assets/
     ├── packet_structure.svg
     └── plugin_flow.svg
@@ -134,7 +271,7 @@ from core.plugin_base import SignalPlugin, PluginResult, Annotation
 
 class MyPlugin(SignalPlugin):
     name    = "My plugin"   # shown in the plugin panel
-    enabled = False         # starts unchecked; user enables in the plugin panel
+    enabled = False   # plugins start unchecked; the user switches them on
 
     def on_connect(self, sample_rate: float) -> None:
         self.fs = sample_rate   # initialise filter state here
@@ -164,7 +301,7 @@ self._plugins = [RPeakDetector(), DicroticNotchDetector(), ECGFIRFilter(), MyPlu
 ```python
 class SignalPlugin(ABC):
     name:    str    # shown in the GUI panel
-    enabled: bool   # default True; user can toggle at runtime
+    enabled: bool   # default False (starts unchecked); user can toggle at runtime
 ```
 
 | Method | When called | Thread |
