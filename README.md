@@ -54,7 +54,7 @@ Whatever the system, the app is installed inside a **virtual environment**, whic
 3. **Open PowerShell** in the project folder and run:
 
    ```powershell
-   git clone https://github.com/<your-username>/healthypi_v4_gui.git
+   git clone https://github.com/oscarys/healthypi_v4_gui.git
    cd healthypi_v4_gui
    py -3 -m venv .venv
    .\.venv\Scripts\Activate.ps1
